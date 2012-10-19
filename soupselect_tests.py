@@ -1,7 +1,7 @@
 import unittest
 from BeautifulSoup import BeautifulSoup
 
-from soupselect import select, monkeypatch, unmonkeypatch
+from soupselect import *
 
 class BaseTest(unittest.TestCase):
     
@@ -98,6 +98,27 @@ class TestBasicSelectors(BaseTest):
         for selector in ('.class1.class3', '.class3.class2',
                          '.class1.class2.class3'):
             self.assertSelects(selector, ['pmulti'])
+
+class TestHelpers(BaseTest):
+
+    def test_select_texts(self):
+        self.assertEqual([u'An H2', u'Another H2'], select_texts(self.soup, 'h2'))
+        self.assertEqual(['An H1Some textSome more textAn H2AnotherBobAnother H2me'], select_texts(self.soup, '#inner'))
+
+    def test_select_text(self):
+        self.assertEqual('An H2 Another H2', select_text(self.soup, 'h2'))
+
+    def test_select_first(self):
+        el = select_first(self.soup, 'h2')
+        self.assertEqual('An H2', el.getText())
+        try:
+            select_first(self.soup, '#does-not-exist')
+            self.assertTrue(False, "Should raise informative exception")
+        except Exception as e:
+            self.assertTrue(u'not matched in soup' in unicode(e))
+
+    def test_select_first_value(self):
+        pass # need to add input forms to HTML
 
 class TestAttributeSelectors(BaseTest):
 

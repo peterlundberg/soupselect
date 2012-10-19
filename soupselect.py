@@ -1,5 +1,6 @@
 """
-soupselect.py
+Source URL: http://github.com/kaj/soupselect/raw/master/soupselect.py
+Downloaded: 9:th Aug, 2010
 
 CSS selector support for BeautifulSoup.
 
@@ -17,7 +18,7 @@ import re
 tag_re = re.compile('^[a-z0-9]+$')
 
 attribselect_re = re.compile(
-    r'^(?P<tag>\w+)?\[(?P<attribute>\w+)(?P<operator>[=~\|\^\$\*]?)' + 
+    r'^(?P<tag>\w+)?\[(?P<attribute>\w+)(?P<operator>[=~\|\^\$\*]?)' +
     r'=?"?(?P<value>[^\]"]*)"?\]$'
 )
 
@@ -26,7 +27,7 @@ attribselect_re = re.compile(
 #     |      |         |               |
 #     |      |         |           The value
 #     |      |    ~,|,^,$,* or =
-#     |   Attribute 
+#     |   Attribute
 #    Tag
 
 def attribute_checker(operator, attribute, value=''):
@@ -50,11 +51,16 @@ def attribute_checker(operator, attribute, value=''):
     }.get(operator, lambda el: el.has_key(attribute))
 
 
-def select(soup, selector):
+def select(soup, selector, text=None):
     """
-    soup should be a BeautifulSoup instance; selector is a CSS selector 
+    soup should be a BeautifulSoup instance; selector is a CSS selector
     specifying the elements you want to retrieve.
+
+    the text parameter filters out element containing the specified text only
+
     """
+    if not soup:
+        return []
     tokens = selector.split()
     current_context = [soup]
     for token in tokens:
@@ -110,11 +116,37 @@ def select(soup, selector):
         for context in current_context:
             found.extend(context.findAll(token))
         current_context = found
+
+    if text:
+        return [e for e in current_context if e.getText() == text]
+
     return current_context
+
+def select_texts(soup, selector):
+    return [re.sub('[ \r\n\t]+', ' ', e.getText()) for e in select(soup, selector)]
+
+def select_text(soup, selector):
+    return " ".join(select_texts(soup, selector))
+
+def select_first(soup, selector):
+    """
+        Select the first matching element
+    """
+    selected = select(soup, selector)
+    if selected:
+        return selected[0]
+    else:
+        raise Exception('Selector "%s" not matched in soup "%s"' % (selector, soup))
+
+def select_first_value(soup, selector):
+    """
+        Select the value attribute of the first matching element
+    """
+    return select_first(soup, selector)['value']
 
 def monkeypatch(BeautifulSoupClass=None):
     """
-    If you don't explicitly state the class to patch, defaults to the most 
+    If you don't explicitly state the class to patch, defaults to the most
     common import location for BeautifulSoup.
     """
     if not BeautifulSoupClass:
